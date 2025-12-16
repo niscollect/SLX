@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <body>
+    <h1 id="name"></h1>
+  </body>
+
+  <script type="module">
+    import { getRandomNinja } from "./lib/ninja.js";
+
+    const ninja = getRandomNinja();
+    document.getElementById("name").textContent = ninja;
+  </script>
+</html>
