@@ -2,6 +2,7 @@ export function resoResolve(badPath, validPaths)
 {
   const bad = badPath.toLowerCase();
 
+  // testing logic
   let randomNumber = Math.floor(Math.abs(Math.random() * validPaths.length));
 
   console.log(randomNumber);
