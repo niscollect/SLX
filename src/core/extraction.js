@@ -56,44 +56,91 @@ export async function parseFile()
 
     for(const el of elements)
     {
-        if(el.type == "ExpressionStatement")
-        {            
-            // console.log(el?.expression?.type);
-            // console.log(el?.expression?.callee?.type);
-            // console.log(el?.expression?.callee?.property?.name);
-            // console.log(el?.expression?.arguments[0]?.type, "\n");
+        
+        // if(el.type == "ExpressionStatement")
+        // {            
+        //     // console.log(el?.expression?.type);
+        //     // console.log(el?.expression?.callee?.type);
+        //     // console.log(el?.expression?.callee?.property?.name);
+        //     // console.log(el?.expression?.arguments[0]?.type, "\n");
 
-            let expressionType = el?.expression?.type || true;
-            let calleeType = el?.expression?.callee?.type || true;
-            let calleePropertyName = el?.expression?.callee?.property?.name || true;
-            let argumentsLiteralName = el?.expression?.arguments?.[0]?.type || true;
+        //     let expressionType = el?.expression?.type || true;
+        //     let calleeType = el?.expression?.callee?.type || true;
+        //     let calleePropertyName = el?.expression?.callee?.property?.name || true;
+        //     let argumentsLiteralName = el?.expression?.arguments?.[0]?.type || true;
 
-            if(expressionType == "CallExpression" && calleeType == "MemberExpression" && HTTPverbs.includes(calleePropertyName) && argumentsLiteralName == "Literal")
-            {
-                // therefore it's a valid surface
+        //     if(expressionType == "CallExpression" && calleeType == "MemberExpression" && HTTPverbs.includes(calleePropertyName) && argumentsLiteralName == "Literal")
+        //     {
+        //         // therefore it's a valid surface
 
-                const linkage = el?.expression?.arguments[0]?.value || null;
+        //         const linkage = el?.expression?.arguments[0]?.value || null;
 
-                console.log(linkage);
+        //         console.log(linkage);
 
-                // const targetLink:
-                // arguments -> arrowFunctionExpression -> body : CallExpression / BlockStatement  -> body (or body -> body) -> ExpressionStatement -> expression : CallExpression -> callee.object.name = res & callee.property.name = send/sendFile  --> argument.callExpression.argument.Literal.value is the file being sent 
+        //         // const targetLink:
+        //         // arguments -> arrowFunctionExpression -> body : CallExpression / BlockStatement  -> body (or body -> body) -> ExpressionStatement -> expression : CallExpression -> callee.object.name = res & callee.property.name = send/sendFile  --> argument.callExpression.argument.Literal.value is the file being sent 
 
-                //instead of this, used AST for a little more to find the start and end of the argument's arrowFunction's body, and then extract that text and use regex to get the targetLink
-                const arrowFunc = el?.expression?.arguments?.[1];
-                let arrowFuncStart = arrowFunc.body.start;
-                let arrowFuncEnd = arrowFunc.body.end;
+        //         //instead of this, used AST for a little more to find the start and end of the argument's arrowFunction's body, and then extract that text and use regex to get the targetLink
+        //         const arrowFunc = el?.expression?.arguments?.[1];
+        //         let arrowFuncStart = arrowFunc.body.start;
+        //         let arrowFuncEnd = arrowFunc.body.end;
 
-                const targetLink = await bringLink(code, arrowFuncStart, arrowFuncEnd);
+        //         const targetLink = await bringLink(code, arrowFuncStart, arrowFuncEnd);
                 
-                const routeData = 
-                {
-                    endpoint : linkage,
-                    target : targetLink
-                };
-                data.push(routeData);
-            }
+        //         const routeData = 
+        //         {
+        //             endpoint : linkage,
+        //             target : targetLink
+        //         };
+        //         data.push(routeData);
+        //     }
             
+        // }
+
+        if(el.type == "ExpressionStatement")
+        {
+            let expression = el?.expression || false;
+            if(!expression || expression?.type != "CallExpression")
+                continue;
+
+            let callee = el?.expression?.callee || false;
+            if(!callee || callee?.type != "MemberExpression")
+                continue;
+
+            let argumentLiteral = el?.expression?.argument?.[0] || false;
+            if(!argumentLiteral || argumentLiteral?.type != "Literal")
+                continue;
+            
+            let calleeProperty = callee?.property || false;
+            if( !calleeProperty || !HTTPverbs.includes(calleeProperty?.name) )
+                continue;
+
+            //** We need to verify callee.object, coz standard javascript methods like map.get(), axios.get(), etc, could trigger false positive, if we just keep looking for .get()
+            //* the callee object must be express instance
+            let expressionArgument = el.expression?.arguments; // an array
+            // We need at least 2 arguments: the route string AND the function
+            // We check the last argument to see if it's an ArrowFunctionExpression
+            let lastArg = expressionArgument[args.length - 1];
+            if( expressionArgument.length < 2 || lastArg?.type != "ArrowFunctionExpression") // the last element of the arguments list, coz there might be middlewares, which we'd want to avoid for now
+                continue;
+
+            const linkage = el?.expression?.arguments[0]?.value || null;
+            console.log(linkage);
+
+            //*targetLink
+            const arrowFunc = el?.expression?.arguments?.[1];
+            let arrowFuncStart = arrowFunc.body.start;
+            let arrowFuncEnd = arrowFunc.body.end;
+
+            const targetLink = await bringLink(code, arrowFuncStart, arrowFuncEnd);
+
+            const routeData = 
+            {
+                endpoint : linkage,
+                target : targetLink
+            };
+            data.push(routeData);
+
         }
 
     }
