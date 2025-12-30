@@ -12,7 +12,7 @@ const filePath = "./index.js"
 async function walker(node)
 {
     
-    walk.simple(node, {
+    walk.recursive(node, {
         // Literal(node)
         // {
         //     console.log("Found a literal:", node.value);
@@ -20,13 +20,44 @@ async function walker(node)
         //? searching Literals is good, but isn't prudent enough, coz they can even use Identifiers; and we can't keeping looking for both, as they'll then be more than imagination
 
         //? instead we search for CallExpressions
-        CallExpression(node)
+        CallExpression(node, state, c)
         {
-            console.log("Found a callExpression:", node.value);
+            // inside CallExpression, endpoint can be either an indentifier or a literal
+            // currently we'll keep the restriction to look for literals only
+            
+            // walk.simple(node, {
+            //     Literal(node)
+            //     {
+            //         console.log("==", node.value);
+            //     }
+            // });
+
+
+            console.log("Found CallExpression, searching its children for Literals...");
+            // walk.recursive(node,{},{
+            //     Literal(node)
+            //     {
+            //         console.log("==", node.value);
+            //     },
+            //     Expression(node, state, c) {
+            //         c(node, state);
+            //     }
+            // })
+            walk.simple(node, {
+                Literal(literalNode) {
+                    console.log("== Literal found inside Call:", literalNode.value);
+                }
+            });
+        },     
+        Expression(node, state, c) {
+            c(node, state);
+        },
+        Statement(node, state, c) {
+            c(node, state);
+        },
+        Program(node, state, c) {
+            c(node, state);
         }
-
-        
-
     })
 }
 
