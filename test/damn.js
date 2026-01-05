@@ -13,11 +13,36 @@ const filePath = "./index.js"
 // our data object that we'll export
 const routes = [];
 
+
+function extractLiteralsFromNode(node) {
+    const literals = [];
+    
+    walk.simple(node, {
+        Literal(literalNode) {
+            if (typeof literalNode.value === "string") {
+                literals.push(literalNode.value);
+            }
+        }
+    });
+    
+    return literals;
+}
+
+
 function extractMethodName(callee)
 {
+    // Base case: if it's a MemberExpression, return the property name
+    if (callee.type === "MemberExpression") {
+        return callee.property.name;
+    }
     
-
-
+    // Recursive case: if it's a CallExpression, look at its callee
+    if (callee.type === "CallExpression") {
+        return extractMethodName(callee.callee);
+    }
+    
+    // If we can't extract a method name, return null
+    return null;
 }
 
 function extractFileFromHandler(handlerBody) 
@@ -45,20 +70,24 @@ function extractFileFromHandler(handlerBody)
             // Now, look for Literals in the arguments
             callNode.arguments.forEach(arg => {
 
-                if(arg.type === "Literal" && typeof(arg.value) === "string")
-                { // may be we are close
-                    console.log("here", arg.value);
+                const foundLiterals = extractLiteralsFromNode(arg);
 
+                // if(arg.type === "Literal" && typeof(arg.value) === "string")
+                // { // may be we are close
+                //     console.log("here", arg.value);
+                foundLiterals.forEach(literal => {
                     // Remove surrounding quotes if they exist (both ' and ")
                     // let cleanName = arg.value.replace(/['"]+/g, '');   
-                    let cleanName = arg.value.replace(/['"]+/g, '').split(/[?#]/)[0].trim();
+                    let cleanName = literal.replace(/['"]+/g, '').split(/[?#]/)[0].trim();
                     //check if the literals end with any eligible extensions, i.e. is an eligible presentable file
                     if(FILE_EXTENSIONS.some(ext => cleanName.endsWith(ext)))
                     {
-                        console.log("arg value log", arg.value);
-                        extractedFile = arg.value;
+                        console.log("arg value log", literal);
+                        extractedFile = literal;
                     } 
-                }
+
+                });
+                // }
             });
         }
     });
