@@ -166,7 +166,4 @@ async function parseFile(filePath)
     return jsonString;
 }
 
-// what to do with this line below?
-// await parseFile();
-
 export { parseFile };
