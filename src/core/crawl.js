@@ -64,8 +64,9 @@ export async function crawl(rootDir)
     // for easier way to batch, we can just have them as an array, that's the easiest way of having them indexed
     // arrayOfAllFiles = [...setOfAllFiles];  OR
     const arrayOfAllFiles = Array.from(setOfAllFiles);
-
     
+    // so we have an array of all files now
+    // now we need to serialize the processing of these files in batches
 
 
 }

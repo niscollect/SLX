@@ -1,25 +1,26 @@
-//?---------------- A basic understanding of terms ---------------------
-//* MemberExpression accesses a property or method of an object
-//* CallExpression executes a function or method
-
-//?---------------------------------------------------------------------
+// before entring here, make sure that the file is express server file
+// make a function that can identify if a file is express server file or not
+// if it is a server file, send here
+// else skip
 
 import { readFile } from "fs/promises";
 import { parse } from "acorn";
 import * as walk from "acorn-walk";
 
-const filePath = "./index.js"
+// const filePath = "./index.js"
 
-// our data object that we'll export
-const routes = [];
+// routes are created locally inside `parseFile` to avoid cross-call state
+// (no module-level `routes` variable)
 
-
-function extractLiteralsFromNode(node) {
+function extractLiteralsFromNode(node)
+{
     const literals = [];
     
     walk.simple(node, {
-        Literal(literalNode) {
-            if (typeof literalNode.value === "string") {
+        Literal(literalNode)
+        {
+            if (typeof literalNode.value === "string")
+            {
                 literals.push(literalNode.value);
             }
         }
@@ -28,16 +29,17 @@ function extractLiteralsFromNode(node) {
     return literals;
 }
 
-
 function extractMethodName(callee)
 {
     // Base case: if it's a MemberExpression, return the property name
-    if (callee.type === "MemberExpression") {
+    if (callee.type === "MemberExpression")
+    {
         return callee.property.name;
     }
     
     // Recursive case: if it's a CallExpression, look at its callee
-    if (callee.type === "CallExpression") {
+    if (callee.type === "CallExpression")
+    {
         return extractMethodName(callee.callee);
     }
     
@@ -59,10 +61,6 @@ function extractFileFromHandler(handlerBody)
             // Extract method name from callee (handles nested cases)
             let methodName = extractMethodName(callNode.callee);
 
-            // if(callNode.callee.type === "MemberExpression")
-            //     methodName = callNode.callee.property.name;
-            // covered this case in the extractMethodName function
-
             // Just Skip if method name doesn't match eligible ones, or is empty
             if(!methodName || !RESPONSE_METHODS.includes(methodName))
                 return;
@@ -72,12 +70,8 @@ function extractFileFromHandler(handlerBody)
 
                 const foundLiterals = extractLiteralsFromNode(arg);
 
-                // if(arg.type === "Literal" && typeof(arg.value) === "string")
-                // { // may be we are close
-                //     console.log("here", arg.value);
-                foundLiterals.forEach(literal => {
-                    // Remove surrounding quotes if they exist (both ' and ")
-                    // let cleanName = arg.value.replace(/['"]+/g, '');   
+
+                foundLiterals.forEach(literal => {  
                     let cleanName = literal.replace(/['"]+/g, '').split(/[?#]/)[0].trim();
                     //check if the literals end with any eligible extensions, i.e. is an eligible presentable file
                     if(FILE_EXTENSIONS.some(ext => cleanName.endsWith(ext)))
@@ -87,7 +81,6 @@ function extractFileFromHandler(handlerBody)
                     } 
 
                 });
-                // }
             });
         }
     });
@@ -96,8 +89,7 @@ function extractFileFromHandler(handlerBody)
     return extractedFile;
 }
 
-
-function walker(node)
+function walker(node, routes)
 {
     const HTTP_VERBS = ["get", "post", "put", "delete", "use"];
     
@@ -130,9 +122,6 @@ function walker(node)
             const file = extractFileFromHandler(handler.body);
             console.log("\n\t\t", file, "\t\t", typeof(file), "\n")
 
-
-
-
             // If we reach here, it's possibly a valid route
             routes.push({
                 method: methodName,
@@ -140,14 +129,12 @@ function walker(node)
                 file: file || null
             });
 
-            console.log(`✓ Found route: ${methodName.toUpperCase()} ${path.value}`);
-
+            console.log(`Found route: ${methodName.toUpperCase()} ${path.value}`);
         }
     })
 }
 
-
-async function parseFile() 
+async function parseFile(filePath)
 {
     //* 1. Read the file content as a string
     const code = await readFile(filePath, "utf8");
@@ -160,8 +147,10 @@ async function parseFile()
 
     //@note : We are only looking for express routes
 
-    // await walker(ast);
-    walker(ast);
+    // use a local routes array so multiple calls don't share state
+    const routes = [];
+    // fill routes by walking the AST
+    walker(ast, routes);
 
     console.log("\n=== Extracted Routes ===");
 
@@ -172,7 +161,12 @@ async function parseFile()
     const jsonString = JSON.stringify(Routesobj, null, 2);
 
     console.log(jsonString);
+
+    // return the JSON string to callers
+    return jsonString;
 }
 
-await parseFile();
-// console.log(data);
+// what to do with this line below?
+// await parseFile();
+
+export { parseFile };
