@@ -1,7 +1,7 @@
 // if file is express server file, send the file to the express crawler
 // if it's an html file, send the file to the html crawler
 
-// create a function that can identify if the file is express server file or not`
+// create a function that can identify if the file is express server file or not
 import { parseFile } from "./express_parser.js";
 import { readFile } from "fs/promises";
 

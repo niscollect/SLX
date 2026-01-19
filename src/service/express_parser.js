@@ -76,7 +76,7 @@ function extractFileFromHandler(handlerBody)
                     //check if the literals end with any eligible extensions, i.e. is an eligible presentable file
                     if(FILE_EXTENSIONS.some(ext => cleanName.endsWith(ext)))
                     {
-                        console.log("arg value log", literal);
+                        // console.log("arg value log", literal);
                         extractedFile = literal;
                     } 
 
@@ -85,7 +85,7 @@ function extractFileFromHandler(handlerBody)
         }
     });
 
-    console.log(extractedFile, "---");
+    // console.log(extractedFile, "---");
     return extractedFile;
 }
 
@@ -120,7 +120,7 @@ function walker(node, routes)
             //* Branch-1: Walking arrow function body
             // Step 5: Extract file from handler body
             const file = extractFileFromHandler(handler.body);
-            console.log("\n\t\t", file, "\t\t", typeof(file), "\n")
+            // console.log("\n\t\t", file, "\t\t", typeof(file), "\n")
 
             // If we reach here, it's possibly a valid route
             routes.push({
@@ -129,7 +129,7 @@ function walker(node, routes)
                 file: file || null
             });
 
-            console.log(`Found route: ${methodName.toUpperCase()} ${path.value}`);
+            // console.log(`Found route: ${methodName.toUpperCase()} ${path.value}`);
         }
     })
 }
@@ -152,7 +152,7 @@ async function parseFile(filePath)
     // fill routes by walking the AST
     walker(ast, routes);
 
-    console.log("\n=== Extracted Routes ===");
+    // console.log("\n=== Extracted Routes ===");
 
     // console.log(JSON.stringify(, null, 2));
 
@@ -160,7 +160,7 @@ async function parseFile(filePath)
 
     const jsonString = JSON.stringify(Routesobj, null, 2);
 
-    console.log(jsonString);
+    // console.log(jsonString);
 
     // return the JSON string to callers
     return jsonString;
